@@ -1,11 +1,10 @@
 package com.example.camerax_mlkit
 
-import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
-import android.content.ContentValues
+
 import android.content.ContentValues.TAG
 import android.content.Context
-import android.content.IntentFilter
+
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -13,13 +12,7 @@ import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Matrix
 import android.graphics.Paint
-import android.graphics.RadialGradient
-import android.graphics.Rect
-import android.graphics.RectF
 import android.graphics.Shader
-import android.graphics.SweepGradient
-import android.graphics.drawable.Drawable
-import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.Animation
@@ -33,14 +26,12 @@ import android.view.animation.AnimationSet
 class ScanLineView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private var scanLineBitmap: Bitmap? = null
     private var animationSetStarted = false
-    val maxImageWidthInDp = 480F
-    val density = resources.displayMetrics.density // 获取屏幕密度
-    val maxImageWidthInPixels = (maxImageWidthInDp * density).toInt()
+    private val maxImageWidthInDp = 480F
     private val paint = Paint()
     private var scanLineY = 0f
     private val paint1 = Paint()
-    var viewHeight=0
-    var viewWidth=0
+    private var viewHeight=0
+    private var viewWidth=0
     private var startX =0F
     private var startY = 0F
     private var endX = 0F
@@ -56,9 +47,8 @@ class ScanLineView(context: Context, attrs: AttributeSet) : View(context, attrs)
         paint.isAntiAlias = true
         setAnimation()
     }
-fun setAnimation(){
+private fun setAnimation(){
     val totalDuration = 2000L
-    val startDuration=500L
     val endDuration = 1500L
 
 // 由不透明到透明
@@ -97,12 +87,10 @@ fun setAnimation(){
     })
     startAnimation(animationSet)
 }
-fun initialize(){
+private fun initialize(){
     try {
-        var scaleRatio = Math.min(
-            viewWidth.toFloat() / scanLineBitmap!!.width,
-            viewHeight.toFloat() / scanLineBitmap!!.height
-        )
+        var scaleRatio =
+            (viewWidth.toFloat() / scanLineBitmap!!.width).coerceAtMost(viewHeight.toFloat() / scanLineBitmap!!.height)
         val maxImageWidthInPixels = (maxImageWidthInDp * resources.displayMetrics.density).toInt()
         var scaledWidth = scanLineBitmap!!.width * scaleRatio
 
@@ -135,7 +123,7 @@ fun initialize(){
     endY = 0F
     shader = LinearGradient(startX, startY, endX, endY, colors, positions, Shader.TileMode.CLAMP)
     startY = scanLineBitmap!!.height.toFloat() - 5
-    if (animationSetStarted==false){
+    if (!animationSetStarted){
         setAnimation()
         animationSetStarted=true
     }
