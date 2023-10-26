@@ -32,6 +32,7 @@ import android.view.animation.AnimationSet
 @SuppressLint("ObjectAnimatorBinding")
 class ScanLineView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private var scanLineBitmap: Bitmap? = null
+    private var animationSetStarted = false
     val maxImageWidthInDp = 480F
     val density = resources.displayMetrics.density // 获取屏幕密度
     val maxImageWidthInPixels = (maxImageWidthInDp * density).toInt()
@@ -42,8 +43,6 @@ class ScanLineView(context: Context, attrs: AttributeSet) : View(context, attrs)
     var viewWidth=0
     private var startX =0F
     private var startY = 0F
-    val displayMetrics = resources.displayMetrics
-    val screenHeight = displayMetrics.heightPixels
     private var endX = 0F
     private var endY = 0F
     private var color1 = Color.argb(0, 19, 174, 103)
@@ -53,27 +52,28 @@ class ScanLineView(context: Context, attrs: AttributeSet) : View(context, attrs)
     private var positions = floatArrayOf(0f, 0.5f, 1.0f) // 颜色的位置
     private lateinit var shader:Shader
     init {
-        val displayMetrics = resources.displayMetrics
-        val screenHeight = displayMetrics.heightPixels
         scanLineBitmap = BitmapFactory.decodeResource(resources, R.drawable.rectangle)
         paint.isAntiAlias = true
-        val totalDuration = 2000L
-        val startDuration=500L
-        val endDuration = 1500L
+        setAnimation()
+    }
+fun setAnimation(){
+    val totalDuration = 2000L
+    val startDuration=500L
+    val endDuration = 1500L
 
 // 由不透明到透明
-        val alphaAnimation = AlphaAnimation(1.0f, 0.0f)
-        alphaAnimation.duration =totalDuration-endDuration
-        alphaAnimation.repeatCount =0
-        alphaAnimation.startOffset=1000L
-        alphaAnimation.repeatMode = Animation.RESTART
-        alphaAnimation.interpolator = LinearInterpolator()
+    val alphaAnimation = AlphaAnimation(1.0f, 0.0f)
+    alphaAnimation.duration =totalDuration-endDuration
+    alphaAnimation.repeatCount =0
+    alphaAnimation.startOffset=1000L
+    alphaAnimation.repeatMode = Animation.RESTART
+    alphaAnimation.interpolator = LinearInterpolator()
 // 创建一个位置渐变动画
-        val translateAnimation = TranslateAnimation(0f, 0f, 0f, screenHeight.toFloat())
-        translateAnimation.duration = totalDuration
-        translateAnimation.repeatCount =0
-        translateAnimation.repeatMode = Animation.RESTART
-        translateAnimation.interpolator = LinearInterpolator()
+    val translateAnimation = TranslateAnimation(0f, 0f, 0f, viewHeight.toFloat())
+    translateAnimation.duration = totalDuration
+    translateAnimation.repeatCount =0
+    translateAnimation.repeatMode = Animation.RESTART
+    translateAnimation.interpolator = LinearInterpolator()
 //由透明到不透明
 //        val alphaAnimation1 = AlphaAnimation(0.0f, 1.0f)
 //        alphaAnimation1.duration = startDuration
@@ -81,24 +81,22 @@ class ScanLineView(context: Context, attrs: AttributeSet) : View(context, attrs)
 //        alphaAnimation1.repeatMode = Animation.RESTART
 //        alphaAnimation1.interpolator = LinearInterpolator()
 // 创建一个动画集合，包括透明度和位置渐变动画
-        val animationSet = AnimationSet(true)
+    val animationSet = AnimationSet(true)
 //        animationSet.addAnimation(alphaAnimation1)
-        animationSet.addAnimation(alphaAnimation)
-        animationSet.addAnimation(translateAnimation)
-        animationSet.setAnimationListener(object : Animation.AnimationListener {
-            override fun onAnimationStart(animation: Animation) {
-            }
+    animationSet.addAnimation(alphaAnimation)
+    animationSet.addAnimation(translateAnimation)
+    animationSet.setAnimationListener(object : Animation.AnimationListener {
+        override fun onAnimationStart(animation: Animation) {
+        }
 
-            override fun onAnimationEnd(animation: Animation) {
-                startAnimation(animationSet)
-            }
-
-            override fun onAnimationRepeat(animation: Animation) {
-            }
-        })
-        startAnimation(animationSet)
-    }
-
+        override fun onAnimationEnd(animation: Animation) {
+            startAnimation(animationSet)
+        }
+        override fun onAnimationRepeat(animation: Animation) {
+        }
+    })
+    startAnimation(animationSet)
+}
 fun initialize(){
     try {
         var scaleRatio = Math.min(
@@ -137,6 +135,10 @@ fun initialize(){
     endY = 0F
     shader = LinearGradient(startX, startY, endX, endY, colors, positions, Shader.TileMode.CLAMP)
     startY = scanLineBitmap!!.height.toFloat() - 5
+    if (animationSetStarted==false){
+        setAnimation()
+        animationSetStarted=true
+    }
 }
 
     override fun onDraw(canvas: Canvas?) {
@@ -154,6 +156,7 @@ fun initialize(){
         viewWidth = w
         viewHeight = h
         initialize()
+
     }
 }
 
