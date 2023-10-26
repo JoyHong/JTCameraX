@@ -55,7 +55,6 @@ class MainActivity : AppCompatActivity() {
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
         }
-
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
