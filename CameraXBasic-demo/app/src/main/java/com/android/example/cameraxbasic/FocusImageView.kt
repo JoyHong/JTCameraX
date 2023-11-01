@@ -10,6 +10,7 @@ import android.view.animation.AnimationUtils
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatImageView
 
+@Suppress("DEPRECATION")
 class FocusImageView : AppCompatImageView {
     private var mFocusImg = NO_ID
     private var mFocusSucceedImg = NO_ID
@@ -47,7 +48,7 @@ class FocusImageView : AppCompatImageView {
         typedArray.recycle()
 
         //聚焦图片不能为空
-        if (mFocusImg == NO_ID || mFocusSucceedImg == NO_ID || mFocusFailedImg == NO_ID) {
+        if (mFocusImg == NO_ID ) {//|| mFocusSucceedImg == NO_ID || mFocusFailedImg == NO_ID
             throw RuntimeException("mFocusImg,mFocusSucceedImg,mFocusFailedImg is null")
         }
     }
@@ -65,52 +66,58 @@ class FocusImageView : AppCompatImageView {
         params.leftMargin = point.x - measuredWidth / 2
         layoutParams = params
         //设置控件可见，并开始动画
+
+        mHandler.removeCallbacksAndMessages(null)
         (parent as View).visibility = VISIBLE
         setImageResource(mFocusImg)
         startAnimation(mAnimation)
+
+        mHandler.postDelayed({
+            (parent as View).visibility = GONE
+        }, 1000)
     }
 
     /**
      * 聚焦成功回调
      */
-    fun onFocusSuccess() {
-        setImageResource(mFocusSucceedImg)
-        //移除在startFocus中设置的callback，1秒后隐藏该控件
-        mHandler.removeCallbacksAndMessages(null)
-        mHandler.postDelayed({
-            (parent as View).visibility = GONE
-        }, 1000)
-    }
+//    fun onFocusSuccess() {
+//        setImageResource(mFocusSucceedImg)
+//        //移除在startFocus中设置的callback，1秒后隐藏该控件
+//        mHandler.removeCallbacksAndMessages(null)
+//        mHandler.postDelayed({
+//            (parent as View).visibility = GONE
+//        }, 1000)
+//    }
 
     /**
      * 聚焦失败回调
      */
-    fun onFocusFailed() {
-        setImageResource(mFocusFailedImg)
-        //移除在startFocus中设置的callback，1秒后隐藏该控件
-        mHandler.removeCallbacksAndMessages( null)
-        mHandler.postDelayed({
-            (parent as View).visibility = GONE
-        }, 1000)
-    }
+//    fun onFocusFailed() {
+//        setImageResource(mFocusFailedImg)
+//        //移除在startFocus中设置的callback，1秒后隐藏该控件
+//        mHandler.removeCallbacksAndMessages( null)
+//        mHandler.postDelayed({
+//            (parent as View).visibility = GONE
+//        }, 1000)
+//    }
 
     /**
      * 设置开始聚焦时的图片
      *
-     * @param focus
+    //     * @param focus
      */
-    fun setFocusImg(focus: Int) {
-        mFocusImg = focus
-    }
+//    fun setFocusImg(focus: Int) {
+//        mFocusImg = focus
+//    }
 
     /**
      * 设置聚焦成功显示的图片
      *
-     * @param focusSucceed
+    //     * @param focusSucceed
      */
-    fun setFocusSucceedImg(focusSucceed: Int) {
-        mFocusSucceedImg = focusSucceed
-    }
+//    fun setFocusSucceedImg(focusSucceed: Int) {
+//        mFocusSucceedImg = focusSucceed
+//    }
 
     companion object {
         private const val NO_ID = -1

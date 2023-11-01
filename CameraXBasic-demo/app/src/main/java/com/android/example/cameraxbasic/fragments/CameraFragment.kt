@@ -449,7 +449,7 @@ class CameraFragment : Fragment() {
     private fun updateCameraUi() {
         fragmentCameraBinding.viewFinder
         val viewFinder= fragmentCameraBinding.viewFinder
-        viewFinder.setOnTouchListener{view,event->
+        viewFinder.setOnTouchListener{ _, event->
             when(event.action){
                 MotionEvent.ACTION_DOWN->
                 {
@@ -679,31 +679,30 @@ class CameraFragment : Fragment() {
             image.close()
         }
     }
-    fun preViewClick(x: Float, y: Float) {
+    private fun preViewClick(x: Float, y: Float) {
         fragmentCameraBinding.let {
             camera?.let {
                 cameraExecutor.let {
-                    if (lensFacing == CameraSelector.LENS_FACING_BACK && !cameraExecutor!!.isShutdown) {
-                        Toast.makeText(context, "x:$x,y:$y", Toast.LENGTH_SHORT).show()
+                    if (lensFacing == CameraSelector.LENS_FACING_BACK && !cameraExecutor.isShutdown) {
                         val factory: MeteringPointFactory =
                             fragmentCameraBinding.viewFinder.meteringPointFactory
                         val point = factory.createPoint(x, y)
                         val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)// FLAG_AF、FLAG_AE、FLAG_AWB
                             .setAutoCancelDuration(3, TimeUnit.SECONDS)//自动取消对焦时间,若对焦时间超过这个时间自动取消对焦
                             .build()
-                        fragmentCameraBinding!!.focusView.startFocus(Point(x.toInt(), y.toInt()))//startfocus自定义函数，在点击的地方出现方框
-                        val future = camera!!.cameraControl.startFocusAndMetering(action)//开启对焦
-                        future.addListener(Runnable {
-                            try {//对焦成功与否的视觉反馈
-                                val result = future.get()
-                                if (result.isFocusSuccessful) {
-                                    fragmentCameraBinding!!.focusView.onFocusSuccess()
-                                } else {
-                                    fragmentCameraBinding!!.focusView.onFocusFailed()
-                                }
-                            } catch (e: Exception) {
-                            }
-                        }, cameraExecutor)
+                        fragmentCameraBinding.focusView.startFocus(Point(x.toInt(), y.toInt()))//start-focus自定义函数，在点击的地方出现方框
+                        camera!!.cameraControl.startFocusAndMetering(action)//开启对焦
+//                        future.addListener(Runnable {
+//                            try {//对焦成功与否的视觉反馈
+//                                val result = future.get()
+//                                if (result.isFocusSuccessful) {
+//                                    fragmentCameraBinding!!.focusView.onFocusSuccess()
+//                                } else {
+//                                    fragmentCameraBinding!!.focusView.onFocusFailed()
+//                                }
+//                            } catch (e: Exception) {
+//                            }
+//                        }, cameraExecutor)
                     }
                 }
             }
