@@ -1,0 +1,146 @@
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+<Button
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="GlobalScope"
+    android:id="@+id/demo1"/>
+
+    <Button
+        android:id="@+id/demo2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:text="runBlocking"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="16dp" />
+
+    <Button
+        android:id="@+id/demo3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:text="coroutinScope"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/demo1" />
+
+    <Button
+        android:id="@+id/demo4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="supervisorScope"
+        app:layout_constraintTop_toBottomOf="@+id/demo3"
+        tools:layout_editor_absoluteX="0dp" />
+
+    <Button
+        android:id="@+id/demo5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Userdefined"
+        app:layout_constraintTop_toBottomOf="@+id/demo4" />
+
+    <Button
+        android:id="@+id/demo6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="launch"
+        app:layout_constraintTop_toBottomOf="@+id/demo5" />
+
+    <Button
+        android:id="@+id/demo7"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="job"
+        app:layout_constraintTop_toBottomOf="@+id/demo6" />
+
+    <Button
+        android:id="@+id/demo8"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="async"
+        app:layout_constraintTop_toBottomOf="@+id/demo7" />
+
+    <Button
+        android:id="@+id/demo9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CoroutineContextjob"
+        app:layout_constraintTop_toBottomOf="@+id/demo8" />
+
+    <Button
+        android:id="@+id/demo10"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Dispatcher"
+        app:layout_constraintTop_toBottomOf="@+id/demo9" />
+
+    <Button
+        android:id="@+id/demo11"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CoroutineName"
+        app:layout_constraintTop_toBottomOf="@+id/demo10" />
+
+    <Button
+        android:id="@+id/demo12"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CoroutineCancel"
+        app:layout_constraintTop_toBottomOf="@+id/demo11" />
+    <Button
+        android:id="@+id/demo13"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CoroutineCancelfailed"
+        app:layout_constraintTop_toBottomOf="@+id/demo12" />
+
+    <Button
+        android:id="@+id/demo14"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="NonCancellable"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/demo15"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="父子级取消操作的传播"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/demo14" />
+    <Button
+        android:id="@+id/demo16"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="withTimeoutdemo"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/demo15" />
+    <Button
+        android:id="@+id/demo17"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CoroutineExceptionHandler"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/demo16" />
+    <Button
+        android:id="@+id/demo18"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SupervisorJob"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/demo17" />
+    <Button
+        android:id="@+id/demo19"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RefreshUI"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/demo18" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+
