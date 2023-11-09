@@ -23,11 +23,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.whenCreated
-import androidx.lifecycle.whenResumed
-import androidx.lifecycle.whenStarted
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -43,7 +39,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
@@ -51,9 +47,20 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.take
+import java.math.MathContext.UNLIMITED
 import java.util.concurrent.CancellationException
-import kotlin.coroutines.coroutineContext
-import kotlin.math.log
+import javax.inject.Scope
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -77,6 +84,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var button17: Button
     private lateinit var button18: Button
     private lateinit var button19: Button
+    private lateinit var button20: Button
+    private lateinit var button21: Button
+    private lateinit var button22: Button
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -148,6 +158,18 @@ class MainActivity : AppCompatActivity() {
             }
             Log.d(TAG, "onCreatedemo: 11111111111")
         }
+        button20=findViewById(R.id.demo20)
+        button20.setOnClickListener {
+            CoroutineStartdemo()
+        }
+        button21=findViewById(R.id.demo21)
+        button21.setOnClickListener {
+            FLowdemo()
+        }
+        button22=findViewById(R.id.demo22)
+        button22.setOnClickListener {
+            Channeldemo()
+        }
     }
 }
 //coroutinScope
@@ -187,10 +209,11 @@ fun runBlockingdemo() {
         }
         launch {
 
-                delay(120)
+                delay(1200)
                 Log.d(TAG, "runBlockingdemo: 3")
-
         }
+      Log.d(TAG, "runBlockingdemo: 0")
+
     }
     Log.d(TAG, "runBlockingdemo:4")
 }
@@ -273,10 +296,44 @@ fun Userdefineddemo () {
 //launch：Job 启动一个协程但不会阻塞调用线程,必须要在协程作用域(CoroutineScope)中才能调用,返回值是一个Job。
 //launch 函数共包含三个参数：
 //context。用于指定协程的上下文
-//start。用于指定协程的启动方式，默认值为 CoroutineStart.DEFAULT，
+//start。用于指定协程的启动方式，默认值为 CoroutineStart.DEFAULT，还有ATOMIC，LAZY ，UNDISPATCHED
+
 // 即协程会在声明的同时就立即进入等待调度的状态，即可以立即执行的状态。可以通过将其设置为CoroutineStart.LAZY来实现延迟启动，即懒加载
 //block。用于传递协程的执行体，即希望交由协程执行的任务
 
+fun CoroutineStartdemo(){
+  runBlocking {
+       var job= launch(start =CoroutineStart.DEFAULT)//协程创建后立即开始调度，虽然是立即调度，不是立即执行，有可能在执行前被取消。
+        {
+            Log.d(TAG, "CoroutineStartdemo: default")
+        }
+        job.cancel()
+        var job1=launch(start =CoroutineStart.LAZY)//主动调用Job的start、join或者await等函数时才会开始调度
+        {
+            Log.d(TAG, "CoroutineStartdemo: Lazy")
+        }
+        var job2=launch(start = CoroutineStart.ATOMIC){//在执行到第一个挂起点的时候是不响应取消操作的
+            Log.d(TAG, "CoroutineStartdemo:ATOMIC 挂起前")
+            delay(100)
+            Log.d(TAG, "CoroutineStartdemo: ATOMIC挂起后")
+        }
+        job2.cancel()
+        var job3=launch(start = CoroutineStart.UNDISPATCHED){
+            //会立即执行，不用经过任何调度器
+                Log.d(TAG, "CoroutineStartdemo: UNDISPATCHED挂起前")
+                delay(100)
+                Log.d(TAG, "CoroutineStartdemo: UNDISPATCHED挂起后")
+            }
+        job3.cancel()
+      job.invokeOnCompletion {//invokeOnCompletion:这个是Job接口中的一个方法，一旦job完成就会被回调
+          Log.d(TAG, "CoroutineStartdemo: job complete callback")
+
+      }
+      delay(500)
+      job1.cancelAndJoin()
+
+    }
+}
 @OptIn(ExperimentalTime::class)
 fun launchdemo(){//A和 B是并行交叉执行的
     val time= measureTime {
@@ -341,24 +398,25 @@ fun jobdemo(){
 //async,
 //async 函数的返回值是一个 Deferred 对象。Deferred 是一个接口类型，继承于 Job 接口，async:Deferred<T>
 // 所以 Job 包含的属性和方法 Deferred 都有，其主要是在 Job 的基础上扩展了 await()方法
-//await() 是一个挂起函数，通常用于获取 Deferred 对象的结果
+//await() 是一个挂起函数，通常用于获取 Deferred 对象的结果,调用await（）会等待返回结果，也是不会继续方法剩余代码的，但是注意它不会阻塞线程的。
 @OptIn(ExperimentalTime::class)
-fun asyncdemo(){
-    val time= measureTime {
-        runBlocking{
-            val asyncA=async {
+fun asyncdemo() {
+    val time = measureTime {
+        runBlocking {
+            val asyncA = async {
                 delay(3000)
                 1
             }
-            val asyncB=async {
+            val asyncB = async {
 
                 delay(4000)
                 2
             }
+            Log.d(TAG, "asyncdemo: before await()")
             Log.d(TAG, "asyncdemo: ${asyncA.await() + asyncB.await()}")
+            Log.d(TAG, "asyncdemo: waiting await()finish")
         }
     }
-
     Log.d(TAG, "asyncdemo: $time")
 }
 
@@ -371,7 +429,7 @@ fun asyncdemo(){
 
 
 //协程中的 Job 是其上下文 CoroutineContext 中的一部分，,job 实际上是 CoroutineScope.coroutineContext.job
-// 可以通过 coroutineContext[Job] 表达式从上下文中获取到，我们可以通过控制 Job 来控制 CoroutineScope 的生命周期\
+// 可以通过 coroutineContext[Job] 表达式从上下文中获取到，我们可以通过控制 Job 来控制 CoroutineScope 的生命周期
 fun CoroutineContextjobdemo(){
     val job=Job()
     val  scope= CoroutineScope(job+Dispatchers.IO)
@@ -389,6 +447,7 @@ fun CoroutineContextjobdemo(){
         delay(1000)
         Log.d(TAG, "CoroutineContextjobdemo: scope is ${scope.coroutineContext[Job]}")
         scope.coroutineContext[Job]?.cancel()
+
         }
     }
 
@@ -673,8 +732,102 @@ fun SupervisorJobdemo() {
 //        }
     }
 
+//Flow
+fun FLowdemo(){//只有调用终止操作符以后，Flow才会工作(Flow是冷的)
+    //Flow有两个生命周期回调函数:
+    // onStart
+    // onCompletion，回调触发的情形
+    // Flow正常执行完毕；
+    //Flow当中出现异常；
+    //Flow被取消。
+    //可以用catch捕获在上游的异常
+    val scope= CoroutineScope(Dispatchers.IO)
+    runBlocking {
+        launch {
+          val flow=  flow {//或者listOf(1,2,3,4,5).asFlow()  flowOf(1,2,3,4,5)
+                for (i in 1..5) {
+                    delay(100)
+                    emit(i)//发射数据 上流
+                }
+            }.flowOn(Dispatchers.IO)//切换context，只对他的上游有作用，假如多次调用flowOn则当前flowOn的范围是到上一个flowOn
+              .filter { it>2 }//三个中转站
+                .onCompletion {
+                    Log.d(TAG, "FLowdemo: Completion")
+                }
+                .onStart {//会返回一个新的Flow对象,优先级很高
+                    Log.d(TAG, "FLowdemo: start")
+                    emit(2)
+                }
+                .map { it*2 }
+                .take(2)
+//              .launchIn(scope)//指定了在flowon之后的代码在哪个线程，这个函数中调用了collect
+                .collect {  Log.d(TAG, "valuedemo :${it}") }//收集数据
+            //终止操作符collect终止操作符，代表数据流的终止
+        // 集合中的操作符，比如first()、single()、fold、reduce...
+        }
+//        launch {
+//            flow {//Flow它一次只处理一个数据
+//            Log.d(TAG, "FLowdemo: send3")
+//            emit(3)
+//            Log.d(TAG, "FLowdemo: send4")
+//            emit(4)
+//            Log.d(TAG, "FLowdemo: send5")
+//            emit(5)
+//        } .filter {
+//            Log.d(TAG, "FLowdemo:filter $it")
+//            it>2
+//        }.collect{
+//            Log.d(TAG, "FLowdemo: collect$it")
+//        }
+//        }
+    }
+}
 
+fun Channeldemo(){//Channel相较于Flow是热的，是指管有没有接收方，发送方都会工作"的模式
+    runBlocking {
+        val channel = Channel<Int>(capacity = 3, onBufferOverflow = BufferOverflow.DROP_LATEST){
+            Log.d(TAG, "Channeldemo: 传递失败$it")//传递失败，onUndeliveredElement
+        }
+        //Channel适合在不同的协程之间传递信息,指定管道的容量是1
+        //onBufferOverflow
+        //这个是当指定了capacity的容量，等Channel的容量满了之后，Channel所应对的策略，这里主要有3种做法：
+        //SUSPEND:当管道的容量满了以后，如果发送方继续发送数据，我们会挂起当前的send()方法。由于它是一个挂起函数，所以我们可以非阻塞的方式将发送方的流程挂起，等管道容量有空闲位置以后再恢复。这个逻辑非常好理解，就和Java实现的阻塞队列一样。
+        //DROP_OLDEST:顾名思义，就是丢弃掉最旧的那个数据；
+        //DROP_LATEST丢掉最新的数据，这里指还没有进入管道的数据；
+        val job=launch {
+            channel.send(1)
+            Log.d(TAG, "Channeldemo: send 1")
+            channel.send(2)
+            Log.d(TAG, "Channeldemo: sned2")
+            channel.send(3)
+            Log.d(TAG, "Channeldemo: send 3")
+            channel.close()//若未关闭管道则程序无法终止可以用produce{}
+        }
 
+       val job1= launch {
+           //isClosedForReceive和isClosedForSend,判断在发送时和接收时Channel是否关闭
+                Log.d(TAG, "Channeldemo: get${channel.receive()} from channel")
+           channel.consumeEach {//
+               Log.d(TAG, "Channeldemo: $it")
+           }
+        }
+//        val channel1 = produce {
+//            (1 .. 3).forEach {
+//                send(it)
+//                Log.d(TAG, "Channeldemo: produce send$it")
+//            }
+//        }
+//
+//        launch {
+//            //在另一个协程中接收管道消息
+//            for (i in channel1){
+//                Log.d(TAG, "Channeldemo: produce receive$i")
+//            }
+//        }
+
+    }
+
+}
 
 
 
