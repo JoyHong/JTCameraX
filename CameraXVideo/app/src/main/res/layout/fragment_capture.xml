@@ -32,6 +32,10 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="V,9:16"/>
 
+    <com.example.android.camerax.video.CustomGestureDetectorView
+        android:id="@+id/gestureDetectorView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
     <CheckBox
         android:id="@+id/audio_selection"
         android:text="@string/audio"

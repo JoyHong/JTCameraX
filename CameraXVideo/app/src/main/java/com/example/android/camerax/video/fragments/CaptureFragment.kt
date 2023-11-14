@@ -39,6 +39,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.camera.core.CameraControl
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -48,6 +49,7 @@ import com.example.android.camerax.video.databinding.FragmentCaptureBinding
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
+import androidx.camera.core.ZoomState
 import androidx.camera.video.*
 import androidx.concurrent.futures.await
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -58,6 +60,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.whenCreated
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.android.camera.utils.GenericListAdapter
+import com.example.android.camerax.video.CustomGestureDetectorView
+import com.example.android.camerax.video.CustomTouchListener
 import com.example.android.camerax.video.extensions.getAspectRatio
 import com.example.android.camerax.video.extensions.getAspectRatioString
 import com.example.android.camerax.video.extensions.getNameString
@@ -65,7 +69,10 @@ import kotlinx.coroutines.*
 import java.util.*
 
 class CaptureFragment : Fragment() {
-
+    private var mZoomState: ZoomState? = null//缩放状态
+    private lateinit var mCustomGestureDetectorView: CustomGestureDetectorView
+    private val zoomStep = 0.1f//缩放步长
+    private var mCameraControl: CameraControl? = null
     // UI with ViewBinding
     private var _captureViewBinding: FragmentCaptureBinding? = null
     private val captureViewBinding get() = _captureViewBinding!!
@@ -342,13 +349,19 @@ class CaptureFragment : Fragment() {
 
         try {
             cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(
+          val camera = cameraProvider.bindToLifecycle(
                 viewLifecycleOwner,
                 cameraSelector,
                 videoCapture,
                 preview
                 // 如需以正确的屏幕方向显示预览数据，您可以使用 Preview.PreviewOutput() 的元数据输出创建转换。
             )
+            mCameraControl = camera.cameraControl
+            val mCameraInfo = camera.cameraInfo
+            mZoomState = mCameraInfo.zoomState.value
+            mCameraInfo.zoomState.observe(this) {
+                mZoomState = it
+            }
 
         } catch (exc: Exception) {
             // we are on main thread, let's reset the controls on the UI.
@@ -491,6 +504,8 @@ class CaptureFragment : Fragment() {
      */
     @SuppressLint("ClickableViewAccessibility", "MissingPermission")
     private fun initializeUI() {
+        captureViewBinding.gestureDetectorView?.setCustomTouchListener(customTouchListener)
+
         captureViewBinding.cameraButton.apply {
             setOnClickListener {
                 cameraIndex = (cameraIndex + 1) % cameraCapabilities.size
@@ -705,6 +720,7 @@ class CaptureFragment : Fragment() {
      *    in the bindCaptureUsecase().
      */
     private fun initializeQualitySectionsUI() {
+
         val selectorStrings = cameraCapabilities[cameraIndex].qualities.map {
             it.getNameString()
         }
@@ -745,7 +761,35 @@ class CaptureFragment : Fragment() {
             isEnabled = false
         }
     }
+    private val customTouchListener: CustomTouchListener = object : CustomTouchListener {
+        override fun zoom() {
+            // 双指手势放大
+            mZoomState?.apply {
+                if (zoomRatio < maxZoomRatio) {
+                    val curZoomRatio = zoomRatio + zoomStep
+                    if (curZoomRatio <= maxZoomRatio) {
+                        mCameraControl?.setZoomRatio(curZoomRatio)
+                    } else {
+                        mCameraControl?.setZoomRatio(maxZoomRatio)
+                    }
+                }
+            }
+        }
 
+        override fun ZoomOut() {
+            // 双指手势缩小
+            mZoomState?.apply {
+                if (zoomRatio > minZoomRatio) {
+                    val curZoomRatio = zoomRatio - zoomStep
+                    if (curZoomRatio >= minZoomRatio) {
+                        mCameraControl?.setZoomRatio(curZoomRatio)
+                    } else {
+                        mCameraControl?.setZoomRatio(minZoomRatio)
+                    }
+                }
+            }
+        }
+    }
     // System function implementations
     override fun onCreateView(
         inflater: LayoutInflater,
