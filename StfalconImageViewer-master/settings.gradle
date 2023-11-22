@@ -1,0 +1,4 @@
+include ':sample'
+
+include 'imageviewer'
+project(':imageviewer').projectDir = new File('imageviewer')
