@@ -26,6 +26,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.*
+import android.widget.FrameLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.fragment.app.FragmentManager
@@ -35,10 +36,11 @@ import com.stfalcon.imageviewer.viewer.view.ImageViewerView
 
 internal class ImageViewerDialog<T>(
     context: Context,
-    private val builderData: BuilderData<T>
+    private val builderData: BuilderData<T>,
+    imageRatio:Float
 ) {
 
-    private val viewerView: ImageViewerView<T> = ImageViewerView(context)
+    private val viewerView: ImageViewerView<T> = ImageViewerView(context, imageRatio = imageRatio)
     private var dialog: ImageViewerDialogFragment<T>? = null
 
     private val dialogStyle

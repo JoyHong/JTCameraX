@@ -59,7 +59,7 @@ class ScrollingImagesDemoActivity : AppCompatActivity() {
         target: ImageView,
         images: List<String>,
         imageViews: List<ImageView>) {
-        viewer = StfalconImageViewer.Builder<String>(this, images, ::loadImage, ::getItemViewType,::createItemView)
+        viewer = StfalconImageViewer.Builder<String>(this, images, ::loadImage, ::getItemViewType,::createItemView,1F)
             .withStartPosition(startPosition)
             .withTransitionFrom(target)
             .withImageChangeListener { viewer.updateTransitionImage(imageViews.getOrNull(it)) }

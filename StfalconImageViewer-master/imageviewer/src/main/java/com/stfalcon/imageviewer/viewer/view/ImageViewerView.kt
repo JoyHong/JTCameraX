@@ -16,13 +16,17 @@
 
 package com.stfalcon.imageviewer.viewer.view
 
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.RelativeLayout
+import android.widget.Toast
 import androidx.core.view.GestureDetectorCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
@@ -44,9 +48,9 @@ import kotlin.math.abs
 internal class ImageViewerView<T> @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
+    defStyleAttr: Int = 0,
+    private val imageRatio: Float
 ) : RelativeLayout(context, attrs, defStyleAttr) {
-
     /**
      * 是否允许拖动退出
      */
@@ -253,7 +257,7 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
         )
     }
 
-    private fun animateOpen() {
+    private fun animateOpen() {//图片放大器的放大动画
         transitionImageAnimator!!.animateOpen(
             onTransitionStart = { duration ->
                 backgroundView.animateAlpha(0f, 1f, duration)
@@ -416,7 +420,7 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
             if (overlayViewSwitchAnimationEnable) {
                 overlayView!!.switchVisibilityWithAnimation()
             }
-//            super.dispatchTouchEvent(event)
+            //            super.dispatchTouchEvent(event)
         }
     }
 
@@ -473,7 +477,8 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
     private fun createTransitionImageAnimator(transitionImageView: View?, internalImage: View?) =
         TransitionImageAnimator(
             externalImage = transitionImageView,
-            internalImage = internalImage
+            internalImage = internalImage,
+            ratio =imageRatio
         )
 
     override fun onDetachedFromWindow() {

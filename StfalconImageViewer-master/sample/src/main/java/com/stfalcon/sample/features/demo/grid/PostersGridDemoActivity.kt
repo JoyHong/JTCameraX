@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.github.chrisbanes.photoview.PhotoView
@@ -22,7 +23,7 @@ import kotlinx.android.synthetic.main.activity_demo_posters_grid.*
 class PostersGridDemoActivity : AppCompatActivity() {
 
     private lateinit var viewer: StfalconImageViewer<Poster>
-
+    private var position=-1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_demo_posters_grid)
@@ -33,12 +34,14 @@ class PostersGridDemoActivity : AppCompatActivity() {
     }
 
     private fun openViewer(startPosition: Int, target: ImageView) {
+        position=startPosition
         viewer = StfalconImageViewer.Builder<Poster>(
             this,
             Demo.posters,
             ::loadPosterImage,
             ::getItemViewType,
-            ::createItemView
+            ::createItemView,
+            getRatio(position)
         )
             .withStartPosition(startPosition)
             .withTransitionFrom(target)
@@ -61,7 +64,6 @@ class PostersGridDemoActivity : AppCompatActivity() {
             })
             .show(supportFragmentManager)
     }
-
 
     //itemView 加载数据的回调方法
     private fun loadPosterImage(view: View, poster: Poster) {
@@ -89,10 +91,14 @@ class PostersGridDemoActivity : AppCompatActivity() {
     }
 
     //获取视图类型的回调方法
-    private fun getItemViewType(position: Int): Int {
+    private fun getItemViewType(position: Int=-1): Int {
+
         return Demo.posters[position].viewType
     }
-
+    private fun getRatio(position: Int):Float{
+        Toast.makeText(this, "$position", Toast.LENGTH_SHORT).show()
+        return 396/704F
+    }
     //根据需要加载控件的不同加载不同的itemView
     private fun createItemView(context: Context, viewType: Int): View {
         val itemView = when (viewType) {

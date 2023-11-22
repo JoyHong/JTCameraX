@@ -48,10 +48,10 @@ public class StfalconImageViewer<T> {
     private final BuilderData<T> builderData;
     private final ImageViewerDialog<T> dialog;
 
-    protected StfalconImageViewer(@NonNull Context context, @NonNull BuilderData<T> builderData) {
+    protected StfalconImageViewer(@NonNull Context context, @NonNull BuilderData<T> builderData,Float imageRatio ) {
         this.context = context;
         this.builderData = builderData;
-        this.dialog = new ImageViewerDialog<>(context, builderData);
+        this.dialog = new ImageViewerDialog<>(context, builderData,imageRatio);
     }
 
     /**
@@ -98,7 +98,6 @@ public class StfalconImageViewer<T> {
     public int getCurrentItem() {
         return dialog.getCurrentItem();
     }
-
     public void setCurrentItem(int position, boolean smoothScroll) {
         dialog.setCurrentItem(position, smoothScroll);
     }
@@ -117,10 +116,11 @@ public class StfalconImageViewer<T> {
     public static class Builder<T> {
         private final Context context;
         private final BuilderData<T> data;
-
-        public Builder(Context context, List<T> images, ImageLoader<T> imageLoader, GetViewType getViewType, OnCreateView createItemView) {
+        private final Float imageRatio;
+        public Builder(Context context, List<T> images, ImageLoader<T> imageLoader, GetViewType getViewType, OnCreateView createItemView,Float imageRatio) {
             this.context = context;
             this.data = new BuilderData<>(images, imageLoader, getViewType, createItemView);
+            this.imageRatio=imageRatio;
         }
 
         /**
@@ -252,7 +252,6 @@ public class StfalconImageViewer<T> {
             this.data.setStatusBarTransparent(statusBarTransparent);
             return this;
         }
-
         /**
          * Sets {@link OnImageChangeListener} for the viewer.
          *
@@ -290,7 +289,7 @@ public class StfalconImageViewer<T> {
          * to do and want this to be created and displayed.
          */
         public StfalconImageViewer<T> build() {
-            return new StfalconImageViewer<>(context, data);
+            return new StfalconImageViewer<>(context, data,imageRatio);
         }
 
         /**
@@ -302,5 +301,6 @@ public class StfalconImageViewer<T> {
             viewer.show(fm);
             return viewer;
         }
+
     }
 }

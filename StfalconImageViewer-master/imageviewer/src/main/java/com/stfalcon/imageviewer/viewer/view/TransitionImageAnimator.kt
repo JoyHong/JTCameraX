@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 stfalcon.com
+ * Copyright 2018 falcon.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ package com.stfalcon.imageviewer.viewer.view
 import android.animation.Animator
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
+import android.content.ContentValues.TAG
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
@@ -29,18 +31,17 @@ import android.view.animation.TranslateAnimation
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.github.chrisbanes.photoview.PhotoView
-import com.stfalcon.imageviewer.R
 import com.stfalcon.imageviewer.common.extensions.isRectVisible
 import com.stfalcon.imageviewer.common.pager.RecyclingPagerAdapter
 
-
 internal class TransitionImageAnimator(
     private val externalImage: View?,
-    private var internalImage: View?
+    private var internalImage: View?,
+    private val ratio: Float
 ) {
 
     companion object {
-        private const val TRANSITION_DURATION = 250L
+        private const val TRANSITION_DURATION = 5000L
     }
 
     internal var isAnimating = false
@@ -145,7 +146,6 @@ internal class TransitionImageAnimator(
         isAnimating = true
         isClosing = true
         startAnimation(internalImage, externalImage, onTransitionEnd, false)
-
     }
 
     fun updateTransitionView(itemView: View?, externalImage: View?) {
@@ -182,22 +182,36 @@ internal class TransitionImageAnimator(
         resetToXValue = toXValue
         resetToYValue = toYValue
     }
-
     private fun startAnimation(
         itemView: View?,
         externalImage: View?,
         onTransitionEnd: (() -> Unit)? = null,
-        isOpen: Boolean
+        isOpen: Boolean,
     ) {
         //缩放动画
-        val scaleX = externalImage!!.width * 1f / itemView!!.width
-        val scaleY = externalImage.height * 1f / itemView.height
-        var toX = if (scaleX > scaleY) { //那个缩放的比例小就用哪个(例如: 0.9 收缩比例 比0.3要小)
-            scaleX
-        } else {
-            scaleY
-        }
+        //externalImage可以得到imageview的宽高
 
+        val imageRatio =ratio
+        val imageViewRatio = externalImage!!.width * 1F / externalImage.height//图片的imageview的宽高比
+        val scale1 = externalImage.height * 1F / (itemView!!.width / imageRatio)//x轴满，拉伸y轴方向
+        val scale2 = externalImage.width * 1F / (itemView.height * imageRatio)//y轴满，拉伸x轴方向
+        val scale3 = externalImage.width * 1F / itemView.width//x轴满，拉伸x轴方向
+        val scale4 = externalImage.height * 1F / itemView.height//y轴满，拉伸y轴方向
+        val phoneRatio = itemView.width * 1F / itemView.height//手机的屏幕比例
+        val toX =
+            if (imageRatio > imageViewRatio && imageRatio > phoneRatio) {//图片宽高比大于imageview宽高比，说明要拉伸y轴
+                //  图片宽高比大于手机的宽高比说明图片点击查看的时候在x轴是满的
+                scale1
+            } else if (imageRatio > imageViewRatio && imageRatio <= phoneRatio) {
+                //图片宽高比小于，说明在图片点击查看的时候y轴是满的
+                scale4
+            } else if (imageRatio < imageViewRatio && imageRatio < phoneRatio) {//图片宽高比小于imageview宽高比，说明要拉伸x轴
+                //图片宽高比小于手机宽高比，说明点击图片的时候，y轴是满的
+                scale2
+            } else {
+                //图片宽高比大于手机狂高比，说明点击图片的时候，x轴是满的
+                scale3
+            }
         if (!isOpen && viewType == RecyclingPagerAdapter.VIEW_TYPE_IMAGE) {
             fun animResetScale(view: View?) {
                 if (view is PhotoView) {
@@ -216,13 +230,20 @@ internal class TransitionImageAnimator(
             val viewPager2 =
                 itemView.findViewById<ViewPager2>(com.stfalcon.imageviewer.R.id.imagesPager)
             val childView =
-                (viewPager2.getChildAt(0) as RecyclerView).layoutManager?.findViewByPosition(viewPager2.currentItem)
+                (viewPager2?.getChildAt(0) as RecyclerView).layoutManager?.findViewByPosition(
+                    viewPager2.currentItem
+                )
             animResetScale(childView)
         }
 
         scaleNumber = toX
         //以自己为中心进行缩放
         val scaleAnimation: ScaleAnimation = if (isOpen) {
+            Log.d(
+                TAG,
+                "startAnimation: ${externalImage.width}  ,externalImageH:${externalImage.height}"
+            )
+            Log.d(TAG, "startAnimation: ${internalImage!!.width}  ,itemH:${internalImage!!.height}")
             ScaleAnimation(
                 toX,
                 1f,
@@ -292,8 +313,8 @@ internal class TransitionImageAnimator(
         }
 
         val animationSet = AnimationSet(true)
-        animationSet.addAnimation(scaleAnimation)
-        animationSet.addAnimation(translateAnimation)
+        animationSet.addAnimation(scaleAnimation)//缩放动画
+        animationSet.addAnimation(translateAnimation)//移动图片至界面中心
         animationSet.duration = TRANSITION_DURATION
         animationSet.fillAfter = true
         itemView.startAnimation(animationSet)
@@ -316,5 +337,4 @@ internal class TransitionImageAnimator(
             }
         })
     }
-
 }
