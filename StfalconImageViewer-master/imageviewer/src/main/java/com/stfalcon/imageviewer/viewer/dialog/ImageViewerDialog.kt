@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 stfalcon.com
+ * Copyright 2018 falcon.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.*
-import android.widget.FrameLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.fragment.app.FragmentManager
@@ -34,44 +33,30 @@ import com.stfalcon.imageviewer.R
 import com.stfalcon.imageviewer.viewer.builder.BuilderData
 import com.stfalcon.imageviewer.viewer.view.ImageViewerView
 
+@Suppress("DEPRECATION")
 internal class ImageViewerDialog<T>(
     context: Context,
     private val builderData: BuilderData<T>,
-    imageRatio:Float
 ) {
 
-    private val viewerView: ImageViewerView<T> = ImageViewerView(context, imageRatio = imageRatio)
+    private val viewerView: ImageViewerView<T> = ImageViewerView(context)
     private var dialog: ImageViewerDialogFragment<T>? = null
 
     private val dialogStyle
-        get() = if (builderData.shouldStatusBarHide)
-            R.style.ImageViewerDialog_NoStatusBar
-        else
-            R.style.ImageViewerDialog_Default
+        get() = if (builderData.shouldStatusBarHide) R.style.ImageViewerDialog_NoStatusBar
+        else R.style.ImageViewerDialog_Default
 
     init {
         setupViewerView()
     }
 
     fun show(fm: FragmentManager) {
-        dialog = ImageViewerDialogFragment(viewerView,
+        dialog = ImageViewerDialogFragment(
+            viewerView,
             if (builderData.useDialogStyle) dialogStyle else 0,
-            object : OnKeyListener {
-                override fun onKey(dialog: DialogInterface, keyCode: Int, event: KeyEvent
-                ): Boolean {
-                    return onDialogKeyEvent(keyCode, event)
-                }
-            },
-            object : OnShowListener {
-                override fun onShow(dialog: DialogInterface) {
-                    viewerView.open(builderData.transitionView)
-                }
-            },
-            object : OnDismissListener {
-                override fun onDismiss(dialog: DialogInterface?) {
-                    builderData.onDismissListener?.onDismiss()
-                }
-            },
+            { _, keyCode, event -> onDialogKeyEvent(keyCode, event) },
+            { viewerView.open(builderData.transitionView) },
+            { builderData.onDismissListener?.onDismiss() },
             builderData.statusBarTransparent
         ).apply {
             show(fm, "ImageViewerDialog")
@@ -90,8 +75,7 @@ internal class ImageViewerDialog<T>(
         viewerView.updateImages(images)
     }
 
-    fun getCurrentItem(): Int =
-        viewerView.currentItem
+    fun getCurrentItem(): Int = viewerView.currentItem
 
     fun setCurrentItem(item: Int, smoothScroll: Boolean) {
         viewerView.setCurrentItem(item, smoothScroll)
@@ -102,10 +86,7 @@ internal class ImageViewerDialog<T>(
     }
 
     private fun onDialogKeyEvent(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK &&
-            event.action == KeyEvent.ACTION_UP &&
-            !event.isCanceled
-        ) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP && !event.isCanceled) {
             viewerView.close()
             return true
         }
@@ -123,7 +104,8 @@ internal class ImageViewerDialog<T>(
                 builderData.startPosition,
                 builderData.imageLoader,
                 builderData.getViewType,
-                builderData.createItemView
+                builderData.createItemView,
+                builderData.imageItemRatio
             )
             onPageChanged = { position ->
                 builderData.imageChangeListener?.onImageChange(position)
@@ -149,7 +131,7 @@ internal class ImageViewerDialog<T>(
     internal class ImageViewerDialogFragment<T> constructor(
         private val viewerView: ImageViewerView<T>? = null,
         private val themeResId: Int = 0,
-        private val onKeyListener: DialogInterface.OnKeyListener? = null,
+        private val onKeyListener: OnKeyListener? = null,
         private val onShowListener: OnShowListener? = null,
         private val onDismissListener: OnDismissListener? = null,
         private val statusBarTransparent: Boolean = false
@@ -160,9 +142,7 @@ internal class ImageViewerDialog<T>(
                 AlertDialog.Builder(requireContext(), themeResId)
             } else {
                 AlertDialog.Builder(requireContext())
-            }).setView(viewerView)
-                .setOnKeyListener(onKeyListener)
-                .create().apply {
+            }).setView(viewerView).setOnKeyListener(onKeyListener).create().apply {
                     setOnShowListener(onShowListener)
 //                    setOnDismissListener(onDismissListener)
                     if (statusBarTransparent) {
@@ -171,11 +151,11 @@ internal class ImageViewerDialog<T>(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                                 lp.layoutInDisplayCutoutMode =
-                                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+                                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
                             }
                             window.attributes = lp
-                            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
+                            window.decorView.systemUiVisibility =
+                                (View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
 
                             window.statusBarColor = Color.TRANSPARENT
                             window.navigationBarColor = Color.TRANSPARENT
@@ -187,7 +167,7 @@ internal class ImageViewerDialog<T>(
                     }
                     if (viewerView == null) {
                         Handler(Looper.getMainLooper()).post {
-                            dismiss();
+                            dismiss()
                         }
                     }
                 }

@@ -1,29 +1,30 @@
 package com.stfalcon.sample.features.demo.grid
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.github.chrisbanes.photoview.PhotoView
 import com.stfalcon.imageviewer.StfalconImageViewer
 import com.stfalcon.imageviewer.common.pager.RecyclingPagerAdapter
 import com.stfalcon.imageviewer.listeners.OnStateListener
+import com.stfalcon.imageviewer.loader.GetViewRatio
 import com.stfalcon.sample.R
 import com.stfalcon.sample.common.extensions.getDrawableCompat
 import com.stfalcon.sample.common.extensions.loadImage
 import com.stfalcon.sample.common.models.Demo
 import com.stfalcon.sample.common.models.Poster
-import kotlinx.android.synthetic.main.activity_demo_posters_grid.*
+import kotlinx.android.synthetic.main.activity_demo_posters_grid.postersGridView
+
 
 class PostersGridDemoActivity : AppCompatActivity() {
 
     private lateinit var viewer: StfalconImageViewer<Poster>
-    private var position=-1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_demo_posters_grid)
@@ -34,22 +35,35 @@ class PostersGridDemoActivity : AppCompatActivity() {
     }
 
     private fun openViewer(startPosition: Int, target: ImageView) {
-        position=startPosition
-        viewer = StfalconImageViewer.Builder<Poster>(
-            this,
+        viewer = StfalconImageViewer.Builder(this,
             Demo.posters,
             ::loadPosterImage,
             ::getItemViewType,
             ::createItemView,
-            getRatio(position)
-        )
-            .withStartPosition(startPosition)
-            .withTransitionFrom(target)
-            .withUseDialogStyle(true)
+            object : GetViewRatio {
+                override fun getItemViewRatio(position: Int): Float {
+                    return when (position) {
+                        0 -> {
+                            933 / 660F
+                        }
+
+                        2 -> {
+                            324 / 703F
+                        }
+
+                        3 -> {
+                            800 / 566F
+                        }
+                        //如果外部传进来的图片的ratio是null，那么就传递一个-1F,将-1F传入动画器，会使用其默认的比例
+                        else -> {
+                            -1F
+                        }
+                    }
+                }
+            }).withStartPosition(startPosition).withTransitionFrom(target).withUseDialogStyle(true)
             .withImageChangeListener {
                 viewer.updateTransitionImage(postersGridView.imageViews[it])
-            }
-            .withStateListener(object : OnStateListener {
+            }.withStateListener(object : OnStateListener {
                 override fun onAnimationStart(view: View, willDismiss: Boolean) {
                 }
 
@@ -61,8 +75,7 @@ class PostersGridDemoActivity : AppCompatActivity() {
 
                 override fun onTrackingEnd(view: View) {
                 }
-            })
-            .show(supportFragmentManager)
+            }).show(supportFragmentManager)
     }
 
     //itemView 加载数据的回调方法
@@ -74,6 +87,7 @@ class PostersGridDemoActivity : AppCompatActivity() {
                     val imageView = view.findViewById<PhotoView>(R.id.photo_view)
                     imageView.loadImage(poster.url)
                 }
+
                 RecyclingPagerAdapter.VIEW_TYPE_SUBSAMPLING_IMAGE -> { //长图的view
                     val subsamplingScaleImageView =
                         view.findViewById<SubsamplingScaleImageView>(R.id.subsampling_scale_imageView)
@@ -91,22 +105,20 @@ class PostersGridDemoActivity : AppCompatActivity() {
     }
 
     //获取视图类型的回调方法
-    private fun getItemViewType(position: Int=-1): Int {
+    private fun getItemViewType(position: Int = -1): Int {
 
         return Demo.posters[position].viewType
     }
-    private fun getRatio(position: Int):Float{
-        Toast.makeText(this, "$position", Toast.LENGTH_SHORT).show()
-        return 396/704F
-    }
+
+
     //根据需要加载控件的不同加载不同的itemView
+    @SuppressLint("InflateParams")
     private fun createItemView(context: Context, viewType: Int): View {
         val itemView = when (viewType) {
             RecyclingPagerAdapter.VIEW_TYPE_IMAGE -> {
-                LayoutInflater.from(context)
-                    .inflate(R.layout.imageview_image, null).apply {
-                    }
+                LayoutInflater.from(context).inflate(R.layout.imageview_image, null).apply {}
             }
+
             else -> { // RecyclingPagerAdapter.VIEW_TYPE_SUBSAMPLING_IMAGE
                 LayoutInflater.from(context).inflate(R.layout.imageview_long_image, null).apply {
                     val subsamplingScaleImageView =
@@ -117,8 +129,7 @@ class PostersGridDemoActivity : AppCompatActivity() {
             }
         }
         itemView.layoutParams = ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
         )
         return itemView
     }

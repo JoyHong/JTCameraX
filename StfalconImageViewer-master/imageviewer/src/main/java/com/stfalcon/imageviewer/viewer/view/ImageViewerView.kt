@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 stfalcon.com
+ * Copyright 2018 falcon.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,35 @@
 
 package com.stfalcon.imageviewer.viewer.view
 
-import android.content.ContentValues.TAG
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.RelativeLayout
-import android.widget.Toast
 import androidx.core.view.GestureDetectorCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
 import androidx.viewpager2.widget.ViewPager2
 import com.stfalcon.imageviewer.R
-import com.stfalcon.imageviewer.common.extensions.*
+import com.stfalcon.imageviewer.common.extensions.animateAlpha
+import com.stfalcon.imageviewer.common.extensions.applyMargin
+import com.stfalcon.imageviewer.common.extensions.isRectVisible
+import com.stfalcon.imageviewer.common.extensions.isVisible
+import com.stfalcon.imageviewer.common.extensions.makeInvisible
+import com.stfalcon.imageviewer.common.extensions.makeVisible
+import com.stfalcon.imageviewer.common.extensions.switchVisibilityWithAnimation
 import com.stfalcon.imageviewer.common.gestures.detector.SimpleOnGestureListener
 import com.stfalcon.imageviewer.common.gestures.direction.SwipeDirection
-import com.stfalcon.imageviewer.common.gestures.direction.SwipeDirection.*
+import com.stfalcon.imageviewer.common.gestures.direction.SwipeDirection.DOWN
+import com.stfalcon.imageviewer.common.gestures.direction.SwipeDirection.LEFT
+import com.stfalcon.imageviewer.common.gestures.direction.SwipeDirection.RIGHT
+import com.stfalcon.imageviewer.common.gestures.direction.SwipeDirection.UP
 import com.stfalcon.imageviewer.common.gestures.direction.SwipeDirectionDetector
 import com.stfalcon.imageviewer.common.gestures.dismiss.SwipeToDismissHandler
 import com.stfalcon.imageviewer.common.pager.RecyclingPagerAdapter
+import com.stfalcon.imageviewer.loader.GetViewRatio
 import com.stfalcon.imageviewer.loader.GetViewType
 import com.stfalcon.imageviewer.loader.ImageLoader
 import com.stfalcon.imageviewer.loader.OnCreateView
@@ -49,7 +55,6 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
-    private val imageRatio: Float
 ) : RelativeLayout(context, attrs, defStyleAttr) {
     /**
      * 是否允许拖动退出
@@ -130,7 +135,11 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
             override fun onChildViewAttachedToWindow(view: View) {
                 if (!isFirstChildAttached) {
                     isFirstChildAttached = true
-                    transitionImageAnimator = createTransitionImageAnimator(externalTransitionImageView, dismissContainer)
+                    transitionImageAnimator = createTransitionImageAnimator(
+                        externalTransitionImageView,
+                        dismissContainer,
+                        imagesPager
+                    )
                     imagesPager.makeVisible()
                     animateOpen()
                 }
@@ -146,6 +155,7 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
                 // 同步退出动画的缩放比例
                 transitionImageAnimator?.scaleSize = scaledSize
             }
+
             override fun onPageScrollStateChanged(state: Int) {
                 super.onPageScrollStateChanged(state)
                 isIdle = state == ViewPager.SCROLL_STATE_IDLE
@@ -174,7 +184,7 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
             return true
         }
 
-        if (currentItem >= imagesAdapter?.itemCount ?: 0) {
+        if (currentItem >= (imagesAdapter?.itemCount ?: 0)) {
             return true
         }
 
@@ -213,18 +223,22 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
         startPosition: Int,
         imageLoader: ImageLoader<T>,
         getViewType: GetViewType,
-        createItemView: OnCreateView
+        createItemView: OnCreateView,
+        imageItemRatio: GetViewRatio
+
     ) {
         this.imagesAdapter = ImagesPagerAdapter(
             context,
             images,
             imageLoader,
             getViewType,
-            createItemView
+            createItemView,
+            imageItemRatio
         )
         this.imagesPager.adapter = imagesAdapter
         this.imagesPager.setCurrentItem(startPosition, false)
     }
+
 
     internal fun updateImages(images: List<T>) {
         imagesAdapter?.updateImages(images)
@@ -241,7 +255,7 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
         if (shouldDismissToBottom) {
             swipeDismissHandler.initiateDismissToBottom()
         } else {
-            if (!transitionImageAnimator!!.isAnimating){
+            if (!transitionImageAnimator!!.isAnimating) {
                 animateClose()
             }
         }
@@ -250,7 +264,11 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
     internal fun updateTransitionImage(imageView: View?) {
         externalTransitionImageView = imageView
         transitionImageAnimator =
-            createTransitionImageAnimator(externalTransitionImageView, dismissContainer)
+            createTransitionImageAnimator(
+                externalTransitionImageView,
+                dismissContainer,
+                imagesPager
+            )
         transitionImageAnimator!!.updateTransitionView(
             dismissContainer,
             externalTransitionImageView
@@ -258,6 +276,9 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
     }
 
     private fun animateOpen() {//图片放大器的放大动画
+//            println("~~~~~~position=${imagesPager.currentItem}")
+//            println("~~~~~~${imagesAdapter?.getItemViewRatio(imagesPager.currentItem)}")
+
         transitionImageAnimator!!.animateOpen(
             onTransitionStart = { duration ->
                 backgroundView.animateAlpha(0f, 1f, duration)
@@ -289,6 +310,7 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
             })
         transitionImageAnimator!!.viewType = viewType
     }
+
 
     private fun animateClose() {
         if (scaledSize != -1.0f) {
@@ -342,9 +364,11 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
                     swipeDismissHandler.onTouch(rootContainer, event)
                 } else true
             }
+
             LEFT, RIGHT -> {
                 imagesPager.dispatchTouchEvent(event)
             }
+
             else -> {
                 if (event.action == MotionEvent.ACTION_CANCEL) {
                     imagesPager.dispatchTouchEvent(event)
@@ -386,6 +410,7 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
             MotionEvent.ACTION_DOWN -> {
                 startY = event.y
             }
+
             MotionEvent.ACTION_UP, MotionEvent.ACTION_MOVE -> {
                 val distance = event.y - startY
                 if ((distance > 0 && distance > limitDistance) && topOrBottom == ImagesPagerAdapter.IMAGE_POSITION_TOP) {  //下滑手势
@@ -415,7 +440,7 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
         isOverlayWasClicked = dispatchOverlayTouch(event)
     }
 
-    private fun handleSingleTap(event: MotionEvent, isOverlayWasClicked: Boolean) {
+    private fun handleSingleTap(isOverlayWasClicked: Boolean) {
         if (overlayView != null && !isOverlayWasClicked) {
             if (overlayViewSwitchAnimationEnable) {
                 overlayView!!.switchVisibilityWithAnimation()
@@ -449,7 +474,7 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
         GestureDetectorCompat(context, SimpleOnGestureListener(
             onSingleTap = {
                 if (isIdle) {
-                    handleSingleTap(it, isOverlayWasClicked)
+                    handleSingleTap(isOverlayWasClicked)
                 }
                 false
             },
@@ -470,15 +495,19 @@ internal class ImageViewerView<T> @JvmOverloads constructor(
             onSwipeTrackingStart = { onTrackingStart?.invoke() },
             onSwipeTrackingEnd = { onTrackingEnd?.invoke() },
             onSwipeViewMove = ::handleSwipeViewMove,
-            onAnimationStart = { willDismiss ->  onAnimationStart?.invoke(willDismiss) },
+            onAnimationStart = { willDismiss -> onAnimationStart?.invoke(willDismiss) },
             onAnimationEnd = { willDismiss -> onAnimationEnd?.invoke(willDismiss) }
         )
 
-    private fun createTransitionImageAnimator(transitionImageView: View?, internalImage: View?) =
+    private fun createTransitionImageAnimator(
+        transitionImageView: View?,
+        internalImage: View?,
+        imagesPager: ViewPager2
+    ) =
         TransitionImageAnimator(
             externalImage = transitionImageView,
             internalImage = internalImage,
-            ratio =imageRatio
+            imagesPager
         )
 
     override fun onDetachedFromWindow() {

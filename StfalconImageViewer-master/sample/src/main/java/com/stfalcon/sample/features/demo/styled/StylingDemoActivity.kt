@@ -13,6 +13,7 @@ import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.github.chrisbanes.photoview.PhotoView
 import com.stfalcon.imageviewer.StfalconImageViewer
 import com.stfalcon.imageviewer.common.pager.RecyclingPagerAdapter
+import com.stfalcon.imageviewer.loader.GetViewRatio
 import com.stfalcon.sample.R
 import com.stfalcon.sample.common.extensions.showShortToast
 import com.stfalcon.sample.common.models.Demo
@@ -53,7 +54,18 @@ class StylingDemoActivity : BaseActivity() {
 //        var posters = Demo.posters.toMutableList()
 //        var posters = Demo.posters.toMutableList()
 
-        val builder = StfalconImageViewer.Builder<Poster>(this, posters, ::loadPosterImage,::getItemViewType,::createItemView,1F)
+        val builder = StfalconImageViewer.Builder<Poster>(this, posters, ::loadPosterImage,::getItemViewType,::createItemView,          object:
+            GetViewRatio {
+            override fun getItemViewRatio(position: Int): Float {
+                return if (position==0){
+                    933/660F
+                } else if(position==2){
+                    324/703F
+                }else{
+                    800/566F
+                }
+            }
+        })
             .withStartPosition(startPosition)
             .withImageChangeListener { position ->
                 if (options.isPropertyEnabled(SHOW_TRANSITION)) {

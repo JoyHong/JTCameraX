@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 stfalcon.com
+ * Copyright 2018 falcon.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package com.stfalcon.imageviewer.viewer.builder
 
 import android.graphics.Color
 import android.view.View
-import com.stfalcon.imageviewer.common.pager.RecyclingPagerAdapter
 import com.stfalcon.imageviewer.listeners.OnDismissListener
 import com.stfalcon.imageviewer.loader.GetViewType
 import com.stfalcon.imageviewer.listeners.OnImageChangeListener
 import com.stfalcon.imageviewer.listeners.OnStateListener
+import com.stfalcon.imageviewer.loader.GetViewRatio
 import com.stfalcon.imageviewer.loader.OnCreateView
 import com.stfalcon.imageviewer.loader.ImageLoader
 
@@ -30,7 +30,8 @@ internal class BuilderData<T>(
     val images: List<T>,
     val imageLoader: ImageLoader<T>,
     val getViewType: GetViewType,
-    val createItemView: OnCreateView
+    val createItemView: OnCreateView,
+    val imageItemRatio: GetViewRatio
 ) {
     var backgroundColor = Color.BLACK
     var startPosition: Int = 0

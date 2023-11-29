@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 stfalcon.com
+ * Copyright 2018 falcon.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import androidx.fragment.app.FragmentManager;
 import com.stfalcon.imageviewer.listeners.OnDismissListener;
 import com.stfalcon.imageviewer.listeners.OnImageChangeListener;
 import com.stfalcon.imageviewer.listeners.OnStateListener;
+import com.stfalcon.imageviewer.loader.GetViewRatio;
 import com.stfalcon.imageviewer.loader.GetViewType;
 import com.stfalcon.imageviewer.loader.ImageLoader;
 import com.stfalcon.imageviewer.loader.OnCreateView;
@@ -44,14 +45,14 @@ import java.util.List;
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class StfalconImageViewer<T> {
 
-    private final Context context;
+
     private final BuilderData<T> builderData;
     private final ImageViewerDialog<T> dialog;
 
-    protected StfalconImageViewer(@NonNull Context context, @NonNull BuilderData<T> builderData,Float imageRatio ) {
-        this.context = context;
+
+    protected StfalconImageViewer(@NonNull Context context, @NonNull BuilderData<T> builderData) {
         this.builderData = builderData;
-        this.dialog = new ImageViewerDialog<>(context, builderData,imageRatio);
+        this.dialog = new ImageViewerDialog<>(context, builderData);
     }
 
     /**
@@ -116,11 +117,9 @@ public class StfalconImageViewer<T> {
     public static class Builder<T> {
         private final Context context;
         private final BuilderData<T> data;
-        private final Float imageRatio;
-        public Builder(Context context, List<T> images, ImageLoader<T> imageLoader, GetViewType getViewType, OnCreateView createItemView,Float imageRatio) {
+        public Builder(Context context, List<T> images, ImageLoader<T> imageLoader, GetViewType getViewType, OnCreateView createItemView, GetViewRatio imageItemRatio) {
             this.context = context;
-            this.data = new BuilderData<>(images, imageLoader, getViewType, createItemView);
-            this.imageRatio=imageRatio;
+            this.data = new BuilderData<>(images, imageLoader, getViewType, createItemView,imageItemRatio);
         }
 
         /**
@@ -289,7 +288,7 @@ public class StfalconImageViewer<T> {
          * to do and want this to be created and displayed.
          */
         public StfalconImageViewer<T> build() {
-            return new StfalconImageViewer<>(context, data,imageRatio);
+            return new StfalconImageViewer<>(context, data);
         }
 
         /**
@@ -301,6 +300,7 @@ public class StfalconImageViewer<T> {
             viewer.show(fm);
             return viewer;
         }
+
 
     }
 }
